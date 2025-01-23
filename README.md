@@ -1,150 +1,86 @@
-# Advanced Web Crawling and Data Extraction Using Crawl4AI
+# Review Scraper with LangChain and Groq
 
-Crawl4AI is an advanced web crawling and data extraction tool that leverages Large Language Models (LLMs) for intelligent and dynamic data retrieval. With built-in support for schema-driven extraction, pagination handling, and dynamic CSS identification, it simplifies the process of extracting meaningful data from web pages.
-
----
+A Python-based web scraping solution that extracts customer reviews from various e-commerce websites using LangChain and Groq LLM.
 
 ## Features
 
-### 1. Dynamic CSS Identification
-- Utilizes LLMs to identify dynamic CSS selectors for extracting data elements such as reviews or product details.
+- Extracts customer reviews from multiple e-commerce websites
+- Processes review data into structured JSON format
+- Uses LangChain for web scraping and content processing
+- Leverages Groq's LLama 3.1 model for intelligent text extraction
+- Handles different website structures seamlessly
 
-### 2. Pagination Handling
-- Automatically navigates through all pages of a website to ensure complete data extraction.
+## Prerequisites
 
-### 3. LLM-Powered Data Extraction
-- Extracts data using schema-driven strategies with custom instructions tailored to the content structure.
-
-### 4. Schema-Driven Extraction
-- Define structured schemas using `pydantic` models for accurate and reliable data extraction.
-
----
-
-## Solution Approach
-
-### Architecture Overview
-
-1. **Input**: Provide a URL and specify extraction requirements (e.g., reviews, ratings).
-2. **Crawling**: Use `AsyncWebCrawler` to fetch and parse content.
-3. **Dynamic CSS Identification**: LLMs identify CSS selectors dynamically for reliable data extraction.
-4. **Data Extraction**: LLMs extract structured data based on user-defined schemas.
-5. **Pagination Handling**: Automatically traverse through all pages using CSS selectors for pagination controls.
-6. **Output**: Return data in a structured JSON format.
-
-### Workflow Diagram
-
-```plaintext
-[Input URL] --> [AsyncWebCrawler] --> [LLM CSS Identification] --> [Data Extraction (Schema)] --> [Pagination Handling] --> [Structured JSON Output]
-```
-
----
+- Python 3.x
+- pip (Python package manager)
 
 ## Installation
 
-### Prerequisites
-- Python 3.8+
-- An OpenAI API Key
+1. Clone this repository or download the script
+2. Install the required dependencies:
 
-### Setup
-1. **Install System Dependencies**:
-   ```bash
-   sudo apt-get update && sudo apt-get install -y \
-       libwoff1 libopus0 libwebp6 libwebpdemux2 libenchant1c2a \
-       libgudev-1.0-0 libsecret-1-0 libhyphen0 libgdk-pixbuf2.0-0 \
-       libegl1 libnotify4 libxslt1.1 libevent-2.1-7 libgles2 libvpx6 \
-       libxcomposite1 libatk1.0-0 libatk-bridge2.0-0 libepoxy0 \
-       libgtk-3-0 libharfbuzz-icu0
-   ```
+```bash
+pip install langchain
+pip install langchain-groq
+pip install langchain-community
+```
 
-2. **Install Python Dependencies**:
-   ```bash
-   pip install crawl4ai nest-asyncio
-   playwright install
-   ```
+## Configuration
 
-3. **Set OpenAI API Key**:
-   Export your OpenAI API key:
-   ```bash
-   export OPENAI_API_KEY='your-openai-api-key'
-   ```
+The script uses Groq API for processing. You'll need to:
 
----
+1. Get a Groq API key (a test key is included but recommended to use your own)
+2. Set up the API key in the script or as an environment variable
 
 ## Usage
 
-### Example: Extracting User Reviews
+The script demonstrates scraping reviews from three sample websites:
 
-#### Python Code
-```python
-import asyncio
-import os
-from crawl4ai import AsyncWebCrawler
-from crawl4ai.extraction_strategy import LLMExtractionStrategy
-from pydantic import BaseModel, Field
-import nest_asyncio
+1. 2717 Recovery Cream (https://2717recovery.com/products/recovery-cream)
+2. BHUMI (https://bhumi.com.au/pages/over-14000-customer-reviews)
+3. LyfeFuel (https://www.reviews.io/company-reviews/store/lyfefuel.com)
 
-nest_asyncio.apply()
+To run the script:
 
-# Define schema for reviews
-class UserReviewSchema(BaseModel):
-    title: str = Field(..., description="Title of the review")
-    body: str = Field(..., description="Body text of the review")
-    rating: int = Field(..., description="Rating given in the review")
-    reviewer: str = Field(..., description="Name of the reviewer")
-
-# Function to extract reviews
-async def extract_user_reviews():
-    async with AsyncWebCrawler(verbose=True) as crawler:
-        result = await crawler.arun(
-            url='https://example.com/product-page',  # Replace with the product page URL
-            extraction_strategy=LLMExtractionStrategy(
-                provider="openai/gpt-4o-mini-2024-07-18",
-                api_token=os.getenv('OPENAI_API_KEY'),
-                schema=UserReviewSchema.schema(),
-                instruction="""
-                Extract user reviews in the following format:
-                {
-                    "reviews_count": 100,
-                    "reviews": [
-                        {
-                            "title": "Review Title",
-                            "body": "Review body text",
-                            "rating": 5,
-                            "reviewer": "Reviewer Name"
-                        }
-                    ]
-                }
-                Ensure the response includes all reviews across pagination.
-                """
-            ),
-            pagination=True,  # Enable pagination handling
-            pagination_selector="button.next-page"  # Update with the correct CSS selector
-        )
-        print(result.extracted_content)
-
-# Run the function
-await extract_user_reviews()
+```bash
+python scrapping_assignment_gomarble.py
 ```
 
-#### Sample JSON Response
+## Output Format
+
+The script extracts reviews in the following JSON format:
+
 ```json
 {
-  "reviews_count": 100,
+  "reviews_count": <total_reviews>,
   "reviews": [
     {
-      "title": "Great product!",
-      "body": "I love this product. It works perfectly.",
-      "rating": 5,
-      "reviewer": "John Doe"
-    },
-    {
-      "title": "Not worth it",
-      "body": "The quality was disappointing.",
-      "rating": 2,
-      "reviewer": "Jane Smith"
+      "title": "<review_title>",
+      "body": "<review_body_text>",
+      "rating": <rating_value>,
+      "reviewer": "<reviewer_name>"
     }
   ]
 }
 ```
 
+## Components
 
+- `WebBaseLoader`: Handles web page content extraction
+- `PromptTemplate`: Structures the extraction prompt for the LLM
+- `ChatGroq`: Processes the content using Groq's LLama 3.1 model
+
+## Limitations
+
+- Website structure changes may affect scraping accuracy
+- Rate limiting may apply based on API usage
+- Some websites may block automated scraping
+
+## Contributing
+
+Feel free to submit issues, fork the repository, and create pull requests for any improvements.
+
+## License
+
+This project is open-source and available under the MIT License.
